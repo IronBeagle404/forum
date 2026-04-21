@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"forum/controller/cookies"
-	"forum/controller/logging"
 
 	forumDB "forum/model/functions"
 )
@@ -33,7 +32,6 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	err := cookies.EndSession(w, r)
 	if err != nil {
 		ErrorHandler(w, r, http.StatusInternalServerError, err.Error())
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusInternalServerError)
 		return
 	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
