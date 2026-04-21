@@ -574,50 +574,43 @@ func DeleteCommentHandler(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromCookie(r)
 	if user.Username == "" {
 		ErrorHandler(w, r, http.StatusUnauthorized, "You must be logged in to delete a comment")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusUnauthorized)
 		return
 	}
 
 	commentID, err := strconv.Atoi(r.FormValue("comment_id"))
 	if err != nil || commentID <= 0 {
 		ErrorHandler(w, r, http.StatusBadRequest, "Invalid comment ID")
-		logging.Logger.Printf("invalid comment id for deletion: %q", r.FormValue("comment_id"))
 		return
 	}
 
 	comments, err := forumDB.FetchCommentsBy(db, "id", commentID)
 	if err != nil {
 		ErrorHandler(w, r, http.StatusInternalServerError, "An error occurred while retrieving the comment")
-		logging.Logger.Printf("FetchCommentsBy error during deletion: %v", err)
 		return
 	}
 
 	if len(comments) == 0 {
 		ErrorHandler(w, r, http.StatusNotFound, "Comment not found")
-		logging.Logger.Printf("comment not found for deletion: %d", commentID)
 		return
 	}
 
 	comment := comments[0]
 	if comment.AuthorID != user.ID {
 		ErrorHandler(w, r, http.StatusForbidden, "You can only delete your own comments")
-		logging.Logger.Printf("forbidden comment deletion attempt user=%d comment=%d author=%d", user.ID, commentID, comment.AuthorID)
 		return
 	}
 
 	deleted, err := forumDB.DeleteComment(db, int64(commentID))
 	if err != nil {
 		ErrorHandler(w, r, http.StatusInternalServerError, "An error occurred while deleting the comment")
-		logging.Logger.Printf("DeleteComment error: %v", err)
 		return
 	}
 
 	if deleted == 0 {
 		ErrorHandler(w, r, http.StatusNotFound, "Comment not found")
-		logging.Logger.Printf("no rows deleted for comment %d", commentID)
 		return
 	}
 
-	logging.Logger.Printf("[DELETE COMMENT] user=%s comment=%d", user.Username, commentID)
+	logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusSeeOther)
 	http.Redirect(w, r, "/?post="+strconv.Itoa(comment.PostID), http.StatusSeeOther)
 }
