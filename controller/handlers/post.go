@@ -512,34 +512,29 @@ func EditCommentHandler(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromCookie(r)
 	if user.Username == "" {
 		ErrorHandler(w, r, http.StatusUnauthorized, "You must be logged in to edit a comment")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusUnauthorized)
 		return
 	}
 
 	commentID, err := strconv.Atoi(r.FormValue("comment_id"))
 	if err != nil || commentID <= 0 {
 		ErrorHandler(w, r, http.StatusBadRequest, "Invalid comment ID")
-		logging.Logger.Printf("invalid comment id for edit: %q", r.FormValue("comment_id"))
 		return
 	}
 
 	comments, err := forumDB.FetchCommentsBy(db, "id", commentID)
 	if err != nil {
 		ErrorHandler(w, r, http.StatusInternalServerError, "An error occurred while retrieving the comment")
-		logging.Logger.Printf("FetchCommentsBy error during edit: %v", err)
 		return
 	}
 
 	if len(comments) == 0 {
 		ErrorHandler(w, r, http.StatusNotFound, "Comment not found")
-		logging.Logger.Printf("comment not found for edit: %d", commentID)
 		return
 	}
 
 	comment := comments[0]
 	if comment.AuthorID != user.ID {
 		ErrorHandler(w, r, http.StatusForbidden, "You can only edit your own comments")
-		logging.Logger.Printf("forbidden comment edit attempt user=%d comment=%d author=%d", user.ID, commentID, comment.AuthorID)
 		return
 	}
 
@@ -547,30 +542,26 @@ func EditCommentHandler(w http.ResponseWriter, r *http.Request) {
 	trimmedContent := strings.TrimSpace(content)
 	if trimmedContent == "" {
 		ErrorHandler(w, r, http.StatusBadRequest, "Comment content cannot be empty")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusBadRequest)
 		return
 	}
 
 	if len(content) > 7500 {
 		ErrorHandler(w, r, http.StatusBadRequest, "The content must be 7500 characters or fewer")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusBadRequest)
 		return
 	}
 
 	updated, err := forumDB.UpdateComment(db, int64(commentID), content)
 	if err != nil {
 		ErrorHandler(w, r, http.StatusInternalServerError, "An error occurred while editing the comment")
-		logging.Logger.Printf("UpdateComment error: %v", err)
 		return
 	}
 
 	if updated == 0 {
 		ErrorHandler(w, r, http.StatusNotFound, "Comment not found")
-		logging.Logger.Printf("no rows updated for comment %d", commentID)
 		return
 	}
 
-	logging.Logger.Printf("[EDIT COMMENT] user=%s comment=%d", user.Username, commentID)
+	logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusSeeOther)
 	http.Redirect(w, r, "/?post="+strconv.Itoa(comment.PostID), http.StatusSeeOther)
 }
 
