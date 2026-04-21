@@ -312,50 +312,43 @@ func DeletePostHandler(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromCookie(r)
 	if user.Username == "" {
 		ErrorHandler(w, r, http.StatusUnauthorized, "You must be logged in to delete a post")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusUnauthorized)
 		return
 	}
 
 	postID, err := strconv.Atoi(r.FormValue("post_id"))
 	if err != nil || postID <= 0 {
 		ErrorHandler(w, r, http.StatusBadRequest, "Invalid post ID")
-		logging.Logger.Printf("invalid post id for deletion: %q", r.FormValue("post_id"))
 		return
 	}
 
 	posts, err := forumDB.FetchPostsBy(db, "id", postID)
 	if err != nil {
 		ErrorHandler(w, r, http.StatusInternalServerError, "An error occurred while retrieving the post")
-		logging.Logger.Printf("FetchPostsBy error during deletion: %v", err)
 		return
 	}
 
 	if len(posts) == 0 {
 		ErrorHandler(w, r, http.StatusNotFound, "Post not found")
-		logging.Logger.Printf("post not found for deletion: %d", postID)
 		return
 	}
 
 	if posts[0].AuthorID != user.ID {
 		ErrorHandler(w, r, http.StatusForbidden, "You can only delete your own posts")
-		logging.Logger.Printf("forbidden post deletion attempt user=%d post=%d author=%d", user.ID, postID, posts[0].AuthorID)
 		return
 	}
 
 	deleted, err := forumDB.DeletePost(db, int64(postID))
 	if err != nil {
 		ErrorHandler(w, r, http.StatusInternalServerError, "An error occurred while deleting the post")
-		logging.Logger.Printf("DeletePost error: %v", err)
 		return
 	}
 
 	if deleted == 0 {
 		ErrorHandler(w, r, http.StatusNotFound, "Post not found")
-		logging.Logger.Printf("no rows deleted for post %d", postID)
 		return
 	}
 
-	logging.Logger.Printf("[DELETE POST] user=%s post=%d", user.Username, postID)
+	logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusSeeOther)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
