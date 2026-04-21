@@ -361,33 +361,28 @@ func EditPostHandler(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromCookie(r)
 	if user.Username == "" {
 		ErrorHandler(w, r, http.StatusUnauthorized, "You must be logged in to edit a post")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusUnauthorized)
 		return
 	}
 
 	postID, err := strconv.Atoi(r.FormValue("post_id"))
 	if err != nil || postID <= 0 {
 		ErrorHandler(w, r, http.StatusBadRequest, "Invalid post ID")
-		logging.Logger.Printf("invalid post id for edit: %q", r.FormValue("post_id"))
 		return
 	}
 
 	posts, err := forumDB.FetchPostsBy(db, "id", postID)
 	if err != nil {
 		ErrorHandler(w, r, http.StatusInternalServerError, "An error occurred while retrieving the post")
-		logging.Logger.Printf("FetchPostsBy error during edit: %v", err)
 		return
 	}
 
 	if len(posts) == 0 {
 		ErrorHandler(w, r, http.StatusNotFound, "Post not found")
-		logging.Logger.Printf("post not found for edit: %d", postID)
 		return
 	}
 
 	if posts[0].AuthorID != user.ID {
 		ErrorHandler(w, r, http.StatusForbidden, "You can only edit your own posts")
-		logging.Logger.Printf("forbidden post edit attempt user=%d post=%d author=%d", user.ID, postID, posts[0].AuthorID)
 		return
 	}
 
@@ -398,36 +393,31 @@ func EditPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	if trimmedTitle == "" || trimmedContent == "" {
 		ErrorHandler(w, r, http.StatusBadRequest, "Post title or content cannot be empty")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusBadRequest)
 		return
 	}
 
 	if len(title) > 100 {
 		ErrorHandler(w, r, http.StatusBadRequest, "The title must be 100 characters or fewer")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusBadRequest)
 		return
 	}
 
 	if len(content) > 7500 {
 		ErrorHandler(w, r, http.StatusBadRequest, "The content must be 7500 characters or fewer")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusBadRequest)
 		return
 	}
 
 	updated, err := forumDB.UpdatePost(db, int64(postID), title, content)
 	if err != nil {
 		ErrorHandler(w, r, http.StatusInternalServerError, "An error occurred while editing the post")
-		logging.Logger.Printf("UpdatePost error: %v", err)
 		return
 	}
 
 	if updated == 0 {
 		ErrorHandler(w, r, http.StatusNotFound, "Post not found")
-		logging.Logger.Printf("no rows updated for post %d", postID)
 		return
 	}
 
-	logging.Logger.Printf("[EDIT POST] user=%s post=%d", user.Username, postID)
+	logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusSeeOther)
 	http.Redirect(w, r, "/?post="+strconv.Itoa(postID), http.StatusSeeOther)
 }
 
