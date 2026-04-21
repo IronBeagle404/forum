@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"slices"
 	"strconv"
@@ -173,9 +172,7 @@ func ViewPostHandler(w http.ResponseWriter, r *http.Request) {
 	// Récupérer le post
 	posts, err := forumDB.FetchPostsBy(db, "id", postID)
 	if err != nil || len(posts) == 0 {
-		log.Println(err)
 		ErrorHandler(w, r, http.StatusNotFound, "Post not found")
-		logging.Logger.Printf("Post not found: %d", postID)
 		return
 	}
 	post := posts[0]
