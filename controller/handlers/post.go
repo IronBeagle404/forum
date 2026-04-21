@@ -445,6 +445,7 @@ func ReplyHandler(
 
 	user := getUserFromCookie(r)
 	if user.Username == "" {
+		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusSeeOther)
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
@@ -454,14 +455,12 @@ func ReplyHandler(
 	postID, err := strconv.Atoi(postIDStr)
 	if err != nil {
 		ErrorHandler(w, r, http.StatusBadRequest, "Invalid post id")
-		logging.Logger.Printf("Invalid post ID : %v", postID)
 		return
 	}
 
 	content := r.FormValue("content")
 	if strings.TrimSpace(content) == "" {
 		ErrorHandler(w, r, http.StatusBadRequest, "Comment content cannot be empty")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusBadRequest)
 		return
 	}
 	// keeping it for later
@@ -473,7 +472,6 @@ func ReplyHandler(
 	_, err = forumDB.InsertComment(db, int64(postID), int64(user.ID), content)
 	if err != nil {
 		ErrorHandler(w, r, http.StatusInternalServerError, "An error occurred while publishing the comment")
-		logging.Logger.Printf("InsertComment error: %v", err)
 		return
 	}
 
