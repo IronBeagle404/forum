@@ -159,6 +159,7 @@ func ViewPostHandler(w http.ResponseWriter, r *http.Request) {
 	// Récupérer l'ID du post
 	postIDStr := r.URL.Query().Get("id")
 	if postIDStr == "" {
+		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusSeeOther)
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
