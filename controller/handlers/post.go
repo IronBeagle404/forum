@@ -66,19 +66,16 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	// return error if empty title/content
 	if trimmedContent == "" || trimmedTitle == "" {
 		ErrorHandler(w, r, http.StatusBadRequest, "Post title or content cannot be empty")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusBadRequest)
 		return
 	}
 
 	if len(title) > 100 {
 		ErrorHandler(w, r, http.StatusBadRequest, "The title must be 100 characters or fewer")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusBadRequest)
 		return
 	}
 
 	if len(content) > 7500 {
 		ErrorHandler(w, r, http.StatusBadRequest, "The content must be 7500 characters or fewer")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusBadRequest)
 		return
 	}
 
@@ -86,7 +83,6 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	postID, err := forumDB.InsertPost(db, int64(user.ID), title, content)
 	if err != nil {
 		ErrorHandler(w, r, http.StatusInternalServerError, "An error occurred while creating the post")
-		logging.Logger.Printf("InsertPost error: %v", err)
 		return
 	}
 
@@ -96,7 +92,6 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 		imageData, err := io.ReadAll(readfile)
 		if err != nil {
 			ErrorHandler(w, r, http.StatusInternalServerError, "Erreur lors de la lecture de l'image")
-			logging.Logger.Printf("Read image error : %v", err)
 			return
 		}
 
@@ -112,7 +107,6 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 		imageID, err := forumDB.InsertImage(db, postID, fileHeader.Filename, imgType, imageData)
 		if err != nil {
 			ErrorHandler(w, r, http.StatusInternalServerError, "Erreur lors de l'insertion de l'image dans la db")
-			logging.Logger.Printf("InsertImage error : %v", err)
 			return
 		}
 
@@ -121,7 +115,6 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 		`, imageID, postID)
 		if err != nil {
 			ErrorHandler(w, r, http.StatusInternalServerError, "Erreur lors du lien post-image")
-			logging.Logger.Printf("Link image-post error : %v", err)
 			return
 		}
 	}
