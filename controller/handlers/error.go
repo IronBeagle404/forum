@@ -15,6 +15,8 @@ type Error struct {
 // Display error with status code, general error type and custom error message
 // Write error code to header, log request, and execute error page template
 func ErrorHandler(w http.ResponseWriter, r *http.Request, statusCode int, message string) {
+
+	w.WriteHeader(statusCode)
 	err := templates.ExecuteTemplate(w, "error.html", Error{
 		Message: message,
 		Code:    statusCode,
