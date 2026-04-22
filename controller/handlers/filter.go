@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
@@ -39,7 +38,6 @@ func FilterHandler(w http.ResponseWriter, r *http.Request) {
 	allPosts, err := forumDB.FetchPosts(db)
 	if err != nil {
 		ErrorHandler(w, r, http.StatusInternalServerError, err.Error())
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -52,13 +50,11 @@ func FilterHandler(w http.ResponseWriter, r *http.Request) {
 			categoryID, err := strconv.Atoi(categoriesValue)
 			if err != nil {
 				ErrorHandler(w, r, http.StatusInternalServerError, err.Error())
-				logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusInternalServerError)
 				return
 			}
 			relationTable, err := forumDB.FetchPostCategoriesBy(db, "category_id", categoryID)
 			if err != nil {
 				ErrorHandler(w, r, http.StatusInternalServerError, err.Error())
-				logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusInternalServerError)
 				return
 			}
 			found := false
@@ -77,6 +73,7 @@ func FilterHandler(w http.ResponseWriter, r *http.Request) {
 		if r.FormValue("created") == "on" {
 			user := getUserFromCookie(r)
 			if user == (forumDB.User{}) {
+				logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusSeeOther)
 				http.Redirect(w, r, "/", http.StatusSeeOther)
 				return
 			}
@@ -89,6 +86,7 @@ func FilterHandler(w http.ResponseWriter, r *http.Request) {
 		if r.FormValue("liked") == "on" {
 			user := getUserFromCookie(r)
 			if user == (forumDB.User{}) {
+				logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusSeeOther)
 				http.Redirect(w, r, "/", http.StatusSeeOther)
 				return
 			}
@@ -96,7 +94,6 @@ func FilterHandler(w http.ResponseWriter, r *http.Request) {
 			reactions, err := forumDB.FetchReactionsBy(db, "post_id", post.ID)
 			if err != nil {
 				ErrorHandler(w, r, http.StatusInternalServerError, err.Error())
-				logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusInternalServerError)
 				return
 			}
 
@@ -116,6 +113,7 @@ func FilterHandler(w http.ResponseWriter, r *http.Request) {
 		if r.FormValue("disliked") == "on" {
 			user := getUserFromCookie(r)
 			if user == (forumDB.User{}) {
+				logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusSeeOther)
 				http.Redirect(w, r, "/", http.StatusSeeOther)
 				return
 			}
@@ -123,7 +121,6 @@ func FilterHandler(w http.ResponseWriter, r *http.Request) {
 			reactions, err := forumDB.FetchReactionsBy(db, "post_id", post.ID)
 			if err != nil {
 				ErrorHandler(w, r, http.StatusInternalServerError, err.Error())
-				logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusInternalServerError)
 				return
 			}
 
@@ -143,6 +140,7 @@ func FilterHandler(w http.ResponseWriter, r *http.Request) {
 		if r.FormValue("commented") == "on" {
 			user := getUserFromCookie(r)
 			if user == (forumDB.User{}) {
+				logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusSeeOther)
 				http.Redirect(w, r, "/", http.StatusSeeOther)
 				return
 			}
@@ -150,7 +148,6 @@ func FilterHandler(w http.ResponseWriter, r *http.Request) {
 			comments, err := forumDB.FetchCommentsBy(db, "post_id", post.ID)
 			if err != nil {
 				ErrorHandler(w, r, http.StatusInternalServerError, err.Error())
-				logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusInternalServerError)
 				return
 			}
 
@@ -204,7 +201,6 @@ func FilterHandler(w http.ResponseWriter, r *http.Request) {
 	filteredData.OnlineUsers = onlineUsers
 
 	if err := templates.ExecuteTemplate(w, "forum.html", filteredData); err != nil {
-		log.Printf("Error executing forum template: %v", err)
 		ErrorHandler(w, r, http.StatusInternalServerError, "Error rendering template")
 		return
 	}
