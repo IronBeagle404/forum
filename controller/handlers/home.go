@@ -14,7 +14,6 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.URL.Path != "/" {
 		ErrorHandler(w, r, http.StatusNotFound, "Page does not exist")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.String(), r.Proto, http.StatusNotFound)
 		return
 	}
 
@@ -31,7 +30,6 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	dbPosts, err := forumDB.FetchPosts(db)
 	if err != nil {
 		ErrorHandler(w, r, http.StatusInternalServerError, "Erreur lors de la récupération des posts")
-		logging.Logger.Printf("FetchPosts error: %v", err)
 		return
 	}
 
@@ -66,7 +64,6 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := templates.ExecuteTemplate(w, "forum.html", viewData); err != nil {
 		ErrorHandler(w, r, http.StatusInternalServerError, "Error rendering template")
-		logging.Logger.Printf("Template execute error: %v", err)
 		return
 	}
 
