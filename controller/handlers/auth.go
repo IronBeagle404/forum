@@ -40,33 +40,28 @@ func SignupHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates
 	// should not happen but anyway
 	if email == "" || password == "" || username == "" || gender == "" || ageStr == "" {
 		ErrorHandler(w, r, http.StatusBadRequest, "Email, username, age, gender and password required")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusBadRequest)
 		return
 	}
 
 	if len(username) > 20 {
 		ErrorHandler(w, r, http.StatusBadRequest, "Username must be 20 characters or fewer")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusBadRequest)
 		return
 	}
 
 	if len(password) < 8 || len(password) > 25 {
 		ErrorHandler(w, r, http.StatusBadRequest, "Password must be between 8 and 25 characters")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusBadRequest)
 		return
 	}
 
 	age, err := strconv.Atoi(ageStr)
 	if err != nil || age < minAge || age > maxAge {
 		ErrorHandler(w, r, http.StatusBadRequest, "Age must be between 13 and 120")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusBadRequest)
 		return
 	}
 
 	// email or username is already used
 	userID, err := forumDB.InsertUser(db, email, username, firstName, lastName, gender, password, age)
 	if err != nil {
-		logging.Logger.Printf("[SIGNUP] InsertUser error: %v", err)
 		ErrorHandler(w, r, http.StatusConflict, "Cannot create account (email or username already used)")
 		return
 	}
@@ -75,7 +70,6 @@ func SignupHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates
 	err = cookies.WriteSessionCookie(w, r, userID)
 	if err != nil {
 		ErrorHandler(w, r, http.StatusInternalServerError, err.Error())
-		logging.Logger.Printf("Error writing session cookie : %v", err)
 		return
 	}
 
