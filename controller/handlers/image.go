@@ -10,6 +10,7 @@ import (
 // Serve images
 func ImageHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
+		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusMethodNotAllowed)
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -17,6 +18,7 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 	// Fetch ID, redirect if not found
 	imageIdStr := r.URL.Query().Get("id")
 	if imageIdStr == "" {
+		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusSeeOther)
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
@@ -30,7 +32,6 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 	img, err := forumDB.FetchImage(db, int64(imageID))
 	if err != nil {
 		ErrorHandler(w, r, http.StatusNotFound, "Image not found")
-		logging.Logger.Printf("Image not found : %d", imageID)
 		return
 	}
 
