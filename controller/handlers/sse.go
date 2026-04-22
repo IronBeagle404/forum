@@ -35,19 +35,19 @@ func (n Notification) Format() string {
 func SSEHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, sseClients map[int][]chan Notification, sseMu *sync.RWMutex) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
-		http.Error(w, "Streaming unsupported", 500)
+		ErrorHandler(w, r, http.StatusInternalServerError, "Streaming unsupported")
 		return
 	}
 
 	cookie, err := r.Cookie("sessionCookie")
 	if err != nil {
-		http.Error(w, "Unauthorized", 401)
+		ErrorHandler(w, r, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
 	user, err := forumDB.FetchUserBySession(db, cookie.Value)
 	if err != nil {
-		http.Error(w, "Unauthorized", 401)
+		ErrorHandler(w, r, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
