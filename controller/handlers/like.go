@@ -20,12 +20,14 @@ func LikeHandler(
 	sseMu *sync.RWMutex,
 ) {
 	if r.Method != http.MethodPost {
+		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusSeeOther)
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
 	user := getUserFromCookie(r)
 	if user.Username == "" {
+		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusSeeOther)
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
@@ -56,6 +58,7 @@ func LikeHandler(
 		}
 	}
 	if !hasPost && !hasComment {
+		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusSeeOther)
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
@@ -63,7 +66,7 @@ func LikeHandler(
 	// Cherche si l'utilisateur a déjà une réaction sur ce post/comment
 	reactions, err := forumDB.FetchReactionsBy(db, "user_id", user.ID)
 	if err != nil {
-		logging.Logger.Printf("FetchReactionsBy error: %v", err)
+		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusSeeOther)
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
@@ -103,14 +106,17 @@ func LikeHandler(
 		if hasComment {
 			comments, err := forumDB.FetchCommentsBy(db, "id", int(commentID))
 			if err == nil && len(comments) > 0 {
+				logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusSeeOther)
 				http.Redirect(w, r, "/?post="+strconv.Itoa(comments[0].PostID), http.StatusSeeOther)
 				return
 			}
 		}
 		if hasPost {
+			logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusSeeOther)
 			http.Redirect(w, r, "/?post="+strconv.Itoa(int(postID)), http.StatusSeeOther)
 			return
 		}
+		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusSeeOther)
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 
