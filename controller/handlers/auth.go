@@ -95,7 +95,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates 
 
 	if identifier == "" || password == "" {
 		ErrorHandler(w, r, http.StatusBadRequest, "Email or nickname and password required")
-		logging.Logger.Printf("%v \"%v %v %v\" %v", r.RemoteAddr, r.Method, r.URL.Path, r.Proto, http.StatusBadRequest)
 		return
 	}
 
@@ -103,7 +102,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates 
 	if err != nil {
 		users, uErr := forumDB.FetchUsersBy(db, "username", identifier)
 		if uErr != nil || len(users) == 0 {
-			logging.Logger.Printf("[LOGIN] FindUser error: %v", err)
 			ErrorHandler(w, r, http.StatusUnauthorized, "Invalid email or password")
 			return
 		}
@@ -111,14 +109,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates 
 	}
 
 	if user.Password != password {
-		logging.Logger.Printf("[LOGIN] Incorrect password for Identifier=%s", identifier)
 		ErrorHandler(w, r, http.StatusUnauthorized, "Invalid email or password")
 		return
 	}
 
 	session, _ := forumDB.FetchSessionByUser(db, int64(user.ID))
 	if session != (forumDB.Session{}) {
-		logging.Logger.Printf("[LOGIN] User %s is already logged in", user.Username)
 		ErrorHandler(w, r, http.StatusUnauthorized, "User is already logged in")
 		return
 	}
@@ -127,7 +123,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request, db *sql.DB, templates 
 	err = cookies.WriteSessionCookie(w, r, int64(user.ID))
 	if err != nil {
 		ErrorHandler(w, r, http.StatusInternalServerError, err.Error())
-		logging.Logger.Printf("Error writing session cookie : %v", err)
 		return
 	}
 
